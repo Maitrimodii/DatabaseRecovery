@@ -20,13 +20,21 @@ type User struct {
 
 // CreateUser creates a new user
 func CreateUser(ctx context.Context, name, email string) error {
-	db := database.GetDB() // Get the database instance with recovery
+	db, err := database.GetDB() // Get the database instance with recovery
+
+	if err != nil {
+		return err
+	}
 	user := User{Name: name, Email: email}
 	return db.WithContext(ctx).Create(&user).Error
 }
 
 func GetUsers(ctx context.Context) ([]User, error) {
-	db := database.GetDB()
+	db, err := database.GetDB() // Get the database instance with recovery
+
+	if err != nil {
+		return nil, err
+	}
 	var user User
 	db.Find(&user)
 
@@ -35,9 +43,13 @@ func GetUsers(ctx context.Context) ([]User, error) {
 
 // GetUserByID retrieves a user by ID
 func GetUserByID(ctx context.Context, id uint) (*User, error) {
-	db := database.GetDB() // Get the database instance with recovery
+	db, err := database.GetDB() // Get the database instance with recovery
+
+	if err != nil {
+		return nil, err
+	}
 	var user User
-	err := db.WithContext(ctx).First(&user, id).Error
+	err = db.WithContext(ctx).First(&user, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -46,26 +58,41 @@ func GetUserByID(ctx context.Context, id uint) (*User, error) {
 
 // UpdateUserEmail updates a user's email by ID
 func UpdateUserEmail(ctx context.Context, id uint, newEmail string) error {
-	db := database.GetDB() // Get the database instance with recovery
+	db, err := database.GetDB() // Get the database instance with recovery
+
+	if err != nil {
+		return err
+	}
 	return db.WithContext(ctx).Model(&User{}).Where("id = ?", id).Update("email", newEmail).Error
 }
 
 func DeleteUsers(ctx context.Context) error {
-	db := database.GetDB()
+	db, err := database.GetDB() // Get the database instance with recovery
+
+	if err != nil {
+		return err
+	}
 	return db.WithContext(ctx).Delete(&User{}).Error
 }
 
 // DeleteUser deletes a user by ID
 func DeleteUser(ctx context.Context, id uint) error {
-	db := database.GetDB() // Get the database instance with recovery
+	db, err := database.GetDB() // Get the database instance with recovery
+
+	if err != nil {
+		return err
+	}
 	return db.WithContext(ctx).Delete(&User{}, id).Error
 }
 
 // Retry executes a database operation with retries
 func Retry(ctx context.Context, operation func(*gorm.DB) error, maxRetries int, retryInterval time.Duration) error {
 	var lastErr error
-	db := database.GetDB()
+	db, err := database.GetDB() // Get the database instance with recovery
 
+	if err != nil {
+		return err
+	}
 	for i := 0; i < maxRetries; i++ {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -88,8 +115,11 @@ func Retry(ctx context.Context, operation func(*gorm.DB) error, maxRetries int, 
 		if err := database.DbInstance.Reconnect(); err != nil {
 			log.Printf("Reconnection failed: %v", err)
 		}
-		db = database.GetDB() // Get updated DB instance
+		db, err = database.GetDB() // Get updated DB instance
 
+		if err != nil {
+			return err
+		}
 		time.Sleep(retryInterval * time.Duration(i+1)) // Exponential backoff
 	}
 

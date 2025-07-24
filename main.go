@@ -57,7 +57,7 @@ func main() {
 		fmt.Println(users)
 	}
 
-	time.Sleep(20 * time.Second)
+	//time.Sleep(20 * time.Second)
 
 	user, err := models.GetUserByID(ctx, 2)
 	if err != nil {

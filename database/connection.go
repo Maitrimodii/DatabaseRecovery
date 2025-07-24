@@ -84,7 +84,7 @@ func (d *Database) Reconnect() error {
 }
 
 // GetDB returns the global database instance, reconnecting if necessary
-func GetDB() *gorm.DB {
+func GetDB() (*gorm.DB, error) {
 	if DbInstance == nil {
 		log.Fatal("Database not initialized")
 	}
@@ -95,8 +95,9 @@ func GetDB() *gorm.DB {
 		log.Println("Database connection lost, attempting to reconnect")
 		if err := DbInstance.Reconnect(); err != nil {
 			log.Printf("Failed to reconnect: %v", err)
+			return nil, err
 		}
 	}
 
-	return DbInstance.DB
+	return DbInstance.DB, nil
 }
